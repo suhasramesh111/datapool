@@ -4,7 +4,7 @@ Team Explore:
 3. Suhas Ramesh
 # datapool
 This repository implements a search engine
-Project Description:
+# Project Description:
     The aim of this project is to develop a search engine that offers a seamless and entertaining user 
     experience in addition to being efficient in delivering appropriate search results.
 
@@ -15,3 +15,4 @@ Project Description:
   2. Make your changes
   3. Create a PR
   4. Get an approval and then merge to the main branch
+
