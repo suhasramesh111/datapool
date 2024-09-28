@@ -1,3 +1,5 @@
+import csv 
+
 class master:
     """
         This class is responsible for the overall orchestration of the KWIC system.
@@ -37,6 +39,7 @@ class master:
         self.circularShift.setup(self.lineStorage)
         self.alphabetizer.alpha(self.lineStorage)
         self.output.print_all_KWIC(self.lineStorage)
+        self.output.dump_KWIC(self.lineStorage)
         
 
 
@@ -313,6 +316,7 @@ class Output:
         """
        
         sorted_shifts = lineStorage.sorted_shifts
+        
         for line in sorted_shifts:
             print(" ".join(line))
 
@@ -329,6 +333,17 @@ class Output:
             Returns:
             None
         """
-        
+
         line = alphabetizer.ith(lineStorage, indx)
         print(" ".join(line))
+        
+    
+    def dump_KWIC(self,lineStorge,path="Index.csv"):
+        with open(path,'w',newline='') as file:
+            writer=csv.writer(file)
+            writer.writerows(lineStorge.sorted_shifts)     
+
+            
+            
+        
+        
