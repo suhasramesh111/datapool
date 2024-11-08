@@ -21,6 +21,6 @@ for sentence in sentences:
     sentence = sentence.strip("\n").lower()
     KWIC.process_line(sentence)
     
-    time.sleep(2)
+    #stime.sleep(2)
 
     
