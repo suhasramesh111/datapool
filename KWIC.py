@@ -1,5 +1,3 @@
-import csv 
-
 class master:
     """
         This class is responsible for the overall orchestration of the KWIC system.
@@ -14,18 +12,19 @@ class master:
         output : Output - Object for printing results.
     """
 
-    def __init__(self):
+    def __init__(self, collection):
         """
             Initializes the Master control class by creating instances of the components.
         """
+        self.colllection = collection
 
         self.lineStorage = LineStorage()
         self.inputModule = InputModule()
         self.circularShift = CircularShift()
         self.alphabetizer = Alphabetizer()
-        self.output = Output()
+        self.output = Output(collection)
 
-    def process_line(self, line):
+    def process_line(self, Content, URL):
         """
             Processes a single line of input through the KWIC system.
             
@@ -35,11 +34,11 @@ class master:
             Returns: None
         """
 
-        self.inputModule.read(line, self.lineStorage)
+        self.inputModule.read(Content, self.lineStorage)
         self.circularShift.setup(self.lineStorage)
         self.alphabetizer.alpha(self.lineStorage)
-        self.output.print_all_KWIC(self.lineStorage)
-        self.output.dump_KWIC(self.lineStorage)
+        # self.output.print_all_KWIC(self.lineStorage)
+        self.output.dump_KWIC(self.lineStorage, Content, URL)
         
 
 
@@ -77,6 +76,7 @@ class LineStorage:
         self.lines = []
         self.sorted_shifts = []
         self.temp_shifts = []
+        self.DB_shifts = []
 
     def setline(self, line, array_name):
         """
@@ -198,12 +198,32 @@ class CircularShift:
         """
         
         line = lineStorage.getline(-1, 'lines')
-
+        
+        stop_words = set(['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 
+    'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 
+    'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 
+    'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves',
+     'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are',
+     'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing',
+     'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 
+    'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 
+    'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 
+    'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 
+    'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 
+    's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y',
+     'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 
+    'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn',
+     "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 
+    'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"])
+        
         n = lineStorage.word(-1, 'lines')
         shifts = lineStorage.temp_shifts
         words = line.split()
-
-        lineStorage.setline(words, 'temp_shifts')
+        
+        unique = set(words)
+        words_filtered = [x for x in unique if x.lower() not in stop_words]
+        
+        lineStorage.setline(words_filtered, 'temp_shifts')
 
         self.shiftWords(n, shifts)
         
@@ -223,7 +243,7 @@ class CircularShift:
             line_to_be_shifted = shifts[-1]
             shifted_line = [line_to_be_shifted[-1]] + line_to_be_shifted[:-1]
 
-            shifts.append(shifted_line)
+            shifts.append(shifted_line)       
 
     def CSLine(self, indx, lineStorage):
         """
@@ -264,6 +284,7 @@ class Alphabetizer:
         if m == 0:
             sorted_shifts += shifts
             sorted_shifts.sort()
+            lineStorage.DB_shifts = sorted_shifts.copy()
             shifts.clear()
             return
 
@@ -282,6 +303,9 @@ class Alphabetizer:
         new_sorted_shift.extend(sorted_shifts[j:])
 
         lineStorage.update_array(new_sorted_shift, 'sorted_shifts')
+        
+        lineStorage.DB_shifts = shifts.copy()
+
         shifts.clear()
 
 
@@ -304,7 +328,9 @@ class Output:
     """
         This class is responsible for printing the KWIC results.
     """
-
+    def __init__(self, collection):
+        self.collection = collection
+        
     def print_all_KWIC(self, lineStorage):
         """
             Prints all sorted circular shifts stored in LineStorage.
@@ -338,10 +364,19 @@ class Output:
         print(" ".join(line))
         
     
-    def dump_KWIC(self,lineStorge,path="Index.csv"):
-        with open(path,'w',newline='') as file:
-            writer=csv.writer(file)
-            writer.writerows(lineStorge.sorted_shifts)     
+    def dump_KWIC(self, lineStorage, content, url):
+        temp_shifts = lineStorage.DB_shifts
+        shifts = []
+        for line in temp_shifts:
+            shifts.append(" ".join(line))
+            
+        doc = {"URL": url,
+               "Original content": content,
+               "Circular Shifts": shifts}
+        
+        self.collection.insert_one(doc)
+        lineStorage.DB_shifts.clear()
+                 
 
             
             
