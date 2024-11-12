@@ -1,30 +1,9 @@
 #Importing the KWIC module
 import pandas as pd
 from KWIC import master
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
-
-#Specifying DB connections
-uri = "mongodb+srv://GeneralUser:GeneralUser@kwic-db.yggrl.mongodb.net/?retryWrites=true&w=majority&appName=KWIC-DB"
-client = MongoClient(uri, server_api=ServerApi('1'))
-
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
-print()
-
-#Accessing Database
-db = client["KWIC-DB"]
-collection = db['webpages']
-
-#clearing the collection
-collection.delete_many({})
-collection.drop_indexes()
 
 #Creating the master object
-KWIC = master(collection)
+KWIC = master()
 
 #Reading lines
 df = pd.read_csv('website_classification_cleaned_filtered.csv')
@@ -38,5 +17,5 @@ for i in range(70):
     
 
 #Create index on the circularly shifted lines
-db.webpages.create_index([("Circular Shifts", "text")])
+KWIC.db.webpages.create_index([("Circular Shifts", "text")])
     

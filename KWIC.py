@@ -1,3 +1,8 @@
+from config import MONGO_USER, MONGO_PASS, MONGO_DB, MONGO_APP
+
+from pymongo import MongoClient
+from pymongo.server_api import ServerApi
+
 class master:
     """
         This class is responsible for the overall orchestration of the KWIC system.
@@ -12,17 +17,31 @@ class master:
         output : Output - Object for printing results.
     """
 
-    def __init__(self, collection):
+    def __init__(self):
         """
             Initializes the Master control class by creating instances of the components.
         """
-        self.colllection = collection
+        uri = f"mongodb+srv://{MONGO_USER}:{MONGO_PASS}@{MONGO_DB}.yggrl.mongodb.net/?retryWrites=true&w=majority&appName={MONGO_APP}"
+        client = MongoClient(uri, server_api=ServerApi('1'))
+
+        try:
+            client.admin.command('ping')
+            print("Pinged your deployment. You successfully connected to MongoDB!")
+        except Exception as e:
+            print(e)
+        print()
+        
+        self.db = client[MONGO_APP]
+        self.collection = self.db['webpages']
+        
+        self.collection.delete_many({})
+        self.collection.drop_indexes()
 
         self.lineStorage = LineStorage()
         self.inputModule = InputModule()
         self.circularShift = CircularShift()
         self.alphabetizer = Alphabetizer()
-        self.output = Output(collection)
+        self.output = Output(self.collection)
 
     def process_line(self, Content, URL):
         """
@@ -366,13 +385,15 @@ class Output:
     
     def dump_KWIC(self, lineStorage, content, url):
         temp_shifts = lineStorage.DB_shifts
+        words = temp_shifts[0]
         shifts = []
         for line in temp_shifts:
             shifts.append(" ".join(line))
             
         doc = {"URL": url,
                "Original content": content,
-               "Circular Shifts": shifts}
+               "Circular Shifts": shifts,
+               "Words": words}
         
         self.collection.insert_one(doc)
         lineStorage.DB_shifts.clear()
