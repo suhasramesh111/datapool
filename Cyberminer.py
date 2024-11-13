@@ -16,13 +16,15 @@ class searchEngine:
             print(e)
         print()
     
-    def case_sensitive_search(self, query):
-        docs = self.db.webpages.find({"$text": {"$search": query, "$caseSensitive": True}})
-        urls = [doc['URL'] for doc in docs]
+    def case_sensitive_search(self, query): #Case sensitive search:
+        docs = self.db.webpages.find(
+        {"$text": {"$search": query}},
+        {"score": {"$meta": "textScore"}}) 
+        urls = [(doc['URL'], doc['score']) for doc in docs]
         return urls
     
     
-    def autofill_search(self, query, limit=5):
+    def autofill_search(self, query, limit=5): #autofill
         # Simple regex to match the query word and the next 1-2 words after it
         regex = rf"\b{re.escape(query)}\b(?:\s+(\w+))?(?:\s+(\w+))?"
     
@@ -43,6 +45,9 @@ class searchEngine:
         
         # Return unique suggestions, limit the number of suggestions
         return list(set(suggestions))[:limit]
+    
+    def delete_out_of_date():
+        pass
     
         
              

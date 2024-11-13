@@ -17,5 +17,5 @@ for i in range(70):
     
 
 #Create index on the circularly shifted lines
-KWIC.db.webpages.create_index([("Circular Shifts", "text")])
+KWIC.db.webpages.create_index([("Original content", "text")])
     
