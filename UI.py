@@ -212,26 +212,25 @@ class DataPoolApp:
         error_label.pack(pady=10)
 
     def show_content(self, content):
-        """Show content in the same window."""
-        # Save the current page before switching to content view
+
         self.previous_page = self.current_page
         
-        self.is_search_results = False  # Switch to content view
-        self.clear_search_results()  # Remove search results
+        self.is_search_results = False  
+        self.clear_search_results()  
 
-        # Display the content in place of the results
+     
         content_label = customtkinter.CTkLabel(self.scrollable_frame, text=content, font=("Arial", 12), wraplength=1400)
         content_label.pack(padx=10, pady=10)
 
-        # Show back button
+     
         back_button = customtkinter.CTkButton(self.scrollable_frame, text="Back", command=self.back_to_results)
         back_button.pack(pady=10)
 
     def back_to_results(self):
         """Switch back to displaying search results and restore the previous page."""
         self.is_search_results = True
-        self.current_page = self.previous_page  # Restore the previous page
-        self.display_results()  # Show search results again
+        self.current_page = self.previous_page  
+        self.display_results()  
 
         # Scroll to the top of the scrollable frame
         #self.scrollable_frame._scrollbar.set(0, 0)
